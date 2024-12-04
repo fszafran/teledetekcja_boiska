@@ -1,6 +1,6 @@
 import numpy as np
 from collections import deque
-from typing import Set, Tuple, List, Optional
+from typing import Set, Tuple, List
 
 class Params:
     def __init__(self, image: np.ndarray, pixel_size: int, min_val: int, top_val: int, model_area: int, model_length: int, model_width: int):
@@ -29,20 +29,25 @@ def pixel_value_in_range(pixel_value: int , min_value: int, top_value: int) -> b
 
 def floodFill(params: Params, start_row: int, start_col: int, visited: Set[Tuple[int, int]]):
     area_tolerance = 200
-    queue = deque([(start_row, start_col)])
-    candidate= set()
     area = 0
+    candidate = set()
+    candidate.add((start_row, start_col))
+    queue = deque([(start_row, start_col)])
     while queue:
         row, col = queue.popleft()
         visited.add((row, col))
         area += params.pixel_size**2
-        if(area > params.model_area + area_tolerance):
+        if area > params.model_area + area_tolerance:
             return None
         for r, c in neighbours(params.image, row,col):
-            if((r,c) not in visited and pixel_value_in_range(params.image[r][c], params.min_val, params.top_val)):
+            if (r,c) not in visited and pixel_value_in_range(params.image[r][c], params.min_val, params.top_val):
                 candidate.add((r,c))
                 visited.add((r,c))
                 queue.append((r,c))
+    
+    if area < params.model_area - area_tolerance:
+        return None
+    
     return candidate
 
 def neighbours(image: np.ndarray, s_row: int , s_col: int) -> List[Tuple[int, int]]:
