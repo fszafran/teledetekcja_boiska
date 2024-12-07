@@ -17,5 +17,6 @@ za mała nie zapisuj do wyniku. Zapisywanie przetworzonych pikseli jako odwiedzo
 5.Dla każdej listy -> graham scan z ktorego mamy boundry niezalezne od orientacji obiektu
 6.Poszukiwanie 2 par wzajemnie równoległych prostych w convex hullu, jezeli nie ma -> skip, 
 jeżeli są porównaj ich długosci z wymiarami boiska, zapisz jako kandydata.
+** cv2.convexHull + cv2.minAreaRectangle + porównanie pól convexhull i minAreaRectangle?
 7. wedlug otrzymanego obrysu (convex hull) stworz warstwe geojson z poligonami.
 """
