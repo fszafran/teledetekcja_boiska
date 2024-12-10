@@ -65,7 +65,7 @@ def is_rectangular(convex_hull: np.ndarray) -> bool:
     return False
 
 def flood_fill(params: Params, start_row: int, start_col: int, visited: Set[Tuple[int, int]]):
-    area_tolerance = 10
+    area_tolerance = 100
     area = 0
     candidate = []
     candidate.append([start_row, start_col])
@@ -132,12 +132,12 @@ def main():
     nir = bands[-1]
     nir_array = read_band_as_array(nir)
     min_val = 900
-    top_val = 1900
+    top_val = 1700
     pixel_size = 3
     model_length = 62
     model_width = 30
-    accepted_candidates = detect_football_fields(nir_array, pixel_size, min_val, top_val, model_length, model_width)
-    print(len(accepted_candidates))
+    # accepted_candidates = detect_football_fields(nir_array, pixel_size, min_val, top_val, model_length, model_width)
+    # print(len(accepted_candidates))
     """
     Accepted candidates (900 - 1900):
     [[3788.783  2769.446 ]
@@ -156,15 +156,19 @@ def main():
     [6716.483  6197.6025]]
     
     """
-    # normalized_nir = cv2.normalize(nir_array, None, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX).astype(np.uint8)
-    # print(normalized_nir.shape)
+    normalized_nir = cv2.normalize(nir_array, None, 500, 900, norm_type=cv2.NORM_MINMAX).astype(np.uint8)
+    print(normalized_nir.shape)
+    cv2.namedWindow("image", cv2.WINDOW_NORMAL)
+    cv2.resizeWindow("image", 800, 800)
     # for bbox in accepted_candidates:
     #     box = cv2.boxPoints(bbox)
+    #     #switch x and y
+    #     box = np.array([[point[1], point[0]] for point in box])
     #     box = np.int64(box)
-    #     cv2.drawContours(normalized_nir, [box], 0, (0, 0, 255), 30)
-    # cv2.imshow("image", normalized_nir)
-    # cv2.waitKey(0)
-    # cv2.destroyAllWindows()
+    #     cv2.drawContours(normalized_nir, [box], 0, (255), 2)
+    cv2.imshow("image", normalized_nir)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
 
 if __name__ == "__main__":
     main()
