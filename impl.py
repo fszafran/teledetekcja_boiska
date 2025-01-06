@@ -5,6 +5,10 @@ from pathlib import Path
 import cv2
 from shapely.geometry import Polygon
 import osgeo.gdal as gdal
+import rasterio
+from rasterio.mask import mask
+import geopandas as gpd
+
 gdal.UseExceptions()
 
 class Params:
@@ -131,15 +135,52 @@ def draw_min_area_rect(image, bbox):
     # cv2.drawContours(image, [box], 0, (0, 0, 255), 2) ???
     pass
 
+def calculate_min_max(image_path, polygons_path):
+    raster_dataset = read_spatial_raster(image_path)
+    raster_dataset.GetProjection()
+    raster_dataset.GetGeoTransform()
+    
+    polygons = gpd.read_file(polygons_path)
+    with rasterio.open(image_path) as src:
+        polygons = polygons.to_crs(src.crs)
+
+    objects = []
+    for i in range(len(polygons)):
+        object_geometry = [polygons.iloc[i].geometry]
+        with rasterio.open(image_path) as src:
+            out_image, out_transform = mask(src, object_geometry, crop=True)
+            out_meta = src.meta.copy()
+        objects.append(out_image[-1])
+    
+    percentiles = []
+    for obj in objects:
+        obj = obj[obj != 0]
+        # calculate 5th and 95th percentile
+        min_val = np.percentile(obj, 5)
+        top_val = np.percentile(obj, 95)
+        percentiles.append((min_val, top_val))
+    
+    min_val = np.mean([percentiles[i][0] for i in range(len(percentiles))])
+    top_val = np.mean([percentiles[i][1] for i in range(len(percentiles))])
+    return min_val, top_val
+
 def main():
-    image_path = "tylko_boiska.tif"
+    # image_path = "tylko_boiska.tif"
+    image_path = "copy_im.tif"
+    # image_path = "ndvi.tif"
+    polygons_path = "poligony/polyg.shp"
+    
     image = read_spatial_raster(image_path)
     indices = [1,2,3,4,5,6,7,8]
     bands = read_raster_bands(image, indices)
     nir = bands[-1]
-    nir_array = read_band_as_array(nir)
-    min_val = 700
-    top_val = 2400
+    nir_array = read_band_as_array(image)
+    
+    min_val, top_val = calculate_min_max(image_path, polygons_path)
+    val_tolerance = 100
+    min_val -= val_tolerance
+    top_val += val_tolerance
+    print(f'{min_val=} {top_val=}')
     pixel_size = 3
     model_length = 62
     model_width = 30
@@ -153,7 +194,7 @@ def main():
         # #switch x and y
         box = np.array([[point[1], point[0]] for point in box])
         box = np.int64(box)
-        cv2.drawContours(normalized_nir, [box], 0, (255), 1)
+        cv2.drawContours(normalized_nir, [box], 0, (0), 5)
     cv2.imshow("image", normalized_nir)
     cv2.waitKey(0)
     cv2.destroyAllWindows()
