@@ -60,14 +60,14 @@ def is_rectangular(polygon: Polygon) -> bool:
         return True
     return False
 
-def matches_ff_shape(polygon: Polygon, model_perimeter, model_area) -> bool:
-    area = polygon.area
+def matches_ff_shape(polygon: Polygon, model_perimeter, model_area, pixel_size) -> bool:
+    area = polygon.area * pixel_size
     length = polygon.length
     model_ratio = model_area/model_perimeter
     curr_ratio = area/length
     print("curr_ratio: ", curr_ratio)
     print("model_ratio: ", model_ratio)
-    ratio_tolerance = 8
+    ratio_tolerance = 1
     ratio_match = abs(model_ratio - curr_ratio) <= ratio_tolerance
     return ratio_match
 
@@ -120,53 +120,32 @@ def detect_football_fields(image: np.ndarray, pixel_size: int, min_val: int, top
     for candidate in candidates:
         convex_hull = get_convexhull_for_candidate(candidate).squeeze()
         polygon = Polygon(convex_hull)
-        if is_rectangular(polygon) and matches_ff_shape(polygon, params.model_perimeter, params.model_area):
+        if is_rectangular(polygon) and matches_ff_shape(polygon, params.model_perimeter, params.model_area, params.pixel_size):
             bbox = cv2.minAreaRect(convex_hull)
             accepted_candidates.append(bbox)
     return accepted_candidates
 
 def draw_min_area_rect(image, bbox):
-    #TODO: Zaimplementować rysowanie [obecnie zwracane dane linijka 140]
     # box = cv2.boxPoints(bbox)
     # box = np.int64(box)
     # cv2.drawContours(image, [box], 0, (0, 0, 255), 2) ???
     pass
 
 def main():
-    image_path = "nowa_kopia.tif"
+    image_path = "tylko_boiska.tif"
     image = read_spatial_raster(image_path)
     indices = [1,2,3,4,5,6,7,8]
     bands = read_raster_bands(image, indices)
-    print(len(bands))
     nir = bands[-1]
     nir_array = read_band_as_array(nir)
-    min_val = 900
-    top_val = 1700
+    min_val = 700
+    top_val = 2400
     pixel_size = 3
     model_length = 62
     model_width = 30
     accepted_candidates = detect_football_fields(nir_array, pixel_size, min_val, top_val, model_length, model_width)
     print(len(accepted_candidates))
-    """
-    Accepted candidates (900 - 1900):
-    [[3788.783  2769.446 ]
-    [3801.5706 2734.736 ]
-    [3807.5486 2736.9387]
-    [3794.761  2771.6487]]
-
-    [[5615.8906 2091.6377]
-    [5661.     2078.    ]
-    [5662.752  2083.796 ]
-    [5617.6426 2097.4336]]
-
-    [[6711.814  6194.59  ]
-    [6741.2925 6148.8984]
-    [6745.9614 6151.911 ]
-    [6716.483  6197.6025]]
-    
-    """
     normalized_nir = cv2.normalize(nir_array, None, 0, 255, norm_type=cv2.NORM_MINMAX).astype(np.uint8)
-    print(normalized_nir.shape)
     cv2.namedWindow("image", cv2.WINDOW_NORMAL)
     cv2.resizeWindow("image", 800, 800)
     for bbox in accepted_candidates:
@@ -174,7 +153,7 @@ def main():
         # #switch x and y
         box = np.array([[point[1], point[0]] for point in box])
         box = np.int64(box)
-        cv2.drawContours(normalized_nir, [box], 0, (255), 2)
+        cv2.drawContours(normalized_nir, [box], 0, (255), 1)
     cv2.imshow("image", normalized_nir)
     cv2.waitKey(0)
     cv2.destroyAllWindows()
