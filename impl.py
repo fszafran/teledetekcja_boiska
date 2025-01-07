@@ -174,7 +174,7 @@ def main():
     indices = [1,2,3,4,5,6,7,8]
     bands = read_raster_bands(image, indices)
     nir = bands[-1]
-    nir_array = read_band_as_array(image)
+    nir_array = read_band_as_array(nir)
     
     min_val, top_val = calculate_min_max(image_path, polygons_path)
     val_tolerance = 100
