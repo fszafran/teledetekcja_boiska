@@ -1,4 +1,5 @@
 /poligony
+/raasters
 *.tif
 *.tif.aux.xml
 *.tif.ovr
