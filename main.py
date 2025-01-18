@@ -29,15 +29,14 @@ def calc_min_max_with_polygons(ndti_path, polygons_path, val_tolerance=1):
             out_image, _ = mask(src, object_geometry, crop=True, nodata=np.nan)
             objects.append(out_image)
 
-    # return np.nanpercentile(objects[0], 10), np.nanmax(objects[0])
-
     values = []
     for obj in objects:
-        min_val = np.nanmin(obj)
-        top_val = np.nanmax(obj)
-        values.append((min_val, top_val))
+        min_val = np.nanpercentile(obj, 15)
+        max_val = np.nanmax(obj)
+        values.append((min_val, max_val))
+        print(min_val, max_val)
 
-    return np.min([x[1] for x in values]) - val_tolerance, np.max([x[1] for x in values]) + val_tolerance
+    return np.min([x[0] for x in values]) - val_tolerance, np.max([x[1] for x in values]) + val_tolerance
 
 
 def extract_mask_by_range(ndti_path, min_val, max_val, output_path):
@@ -59,16 +58,28 @@ if __name__ == '__main__':
     img_path = 'copy_im.tif'
     ndti_path = 'rasters/ndti.tif'
     polygons_path = 'poligony/polyg.shp'
-    filtered_path = 'rasters/filtered_raster.tif'
+    filtered_path = 'rasters/filtered_raster2.tif'
     candidates_path = 'poligony/candidates.shp'
 
-    gen_ndti(img_path, ndti_path)
-    min_value, max_value = calc_min_max_with_polygons(ndti_path, polygons_path)
+    # gen_ndti(img_path, ndti_path)
+    # min_value, max_value = calc_min_max_with_polygons(ndti_path, polygons_path)
+    # print()
+    # print(min_value, max_value)
+    min_value, max_value = 26, 30
     extract_mask_by_range(ndti_path, min_value, max_value, filtered_path)
+
 
     '''
     TODO:
-    zwektoryzować
-    Funkcja do sprawdzania pola, geometri, 
+    31 50.5
+
+    Raster mask
+    Reclasify !Nan -> 1
+    Raster to polygon
+    Selekcja area 1600-2000
+    BBOX
+    selekcja proporcje i area
+    
+    Shape_Area / Shape_Length  > 9.95 AND Shape_Area / Shape_Length < 10.6 AND Shape_Area > 1600 AND Shape_Area < 2000
     
     '''
